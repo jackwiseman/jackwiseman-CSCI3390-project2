@@ -63,8 +63,8 @@ object main{
     }
   }
 
-  class BJKSTSketch(bucket_in: Set[(String, Int)] ,  z_in: Int, bucket_size_in: Int) extends Serializable {
-/* A constructor that requies intialize the bucket and the z value. The bucket size is the bucket size of the sketch. */
+  /*class BJKSTSketch(bucket_in: Set[(String, Int)] ,  z_in: Int, bucket_size_in: Int) extends Serializable {
+// A constructor that requies intialize the bucket and the z value. The bucket size is the bucket size of the sketch.
 
     var bucket: Set[(String, Int)] = bucket_in
     var z: Int = z_in
@@ -72,18 +72,18 @@ object main{
     val BJKST_bucket_size = bucket_size_in;
 
     def this(s: String, z_of_s: Int, bucket_size_in: Int){
-      /* A constructor that allows you pass in a single string, zeroes of the string, and the bucket size to initialize the sketch */
+//      A constructor that allows you pass in a single string, zeroes of the string, and the bucket size to initialize the sketch 
       this(Set((s, z_of_s )) , z_of_s, bucket_size_in)
     }
 
-    def +(that: BJKSTSketch): BJKSTSketch = {    /* Merging two sketches */
-
+    def +(that: BJKSTSketch): BJKSTSketch = {   // Merging two sketches 
+      bucket ++= bucket.union(that.bucket)
     }
 
-    def add_string(s: String, z_of_s: Int): BJKSTSketch = {   /* add a string to the sketch */
-
+    def add_string(s: String, z_of_s: Int): BJKSTSketch = {   //add a string to the sketch 
+      bucket += Set(s, z_of_s)
     }
-  }
+  } */
 
 
   def tidemark(x: RDD[String], trials: Int): Double = {
@@ -99,13 +99,31 @@ object main{
   }
 
 
-  def BJKST(x: RDD[String], width: Int, trials: Int) : Double = {
-
-  }
+  /*def BJKST(x: RDD[String], width: Int, trials: Int) : Double = {
+    val h = Seq.fill(trials)(new hash_function(2000000000))
+    
+  }*/
 
 
   def Tug_of_War(x: RDD[String], width: Int, depth:Int) : Long = {
+    val means = new scala.collection.mutable.ArrayBuffer[Long]()
+    var currMean = 0L
 
+    for (b <- 1 to depth) {
+      for(a <- 1 to width) {
+        val h = (new four_universal_Radamacher_hash_function)
+        var z = x.map( i => h.hash(i)).reduce(_ + _).longValue
+        currMean = currMean + (z * z)
+      }
+      means += currMean / width // add this to an array of other means
+      currMean = 0L;
+    }
+    means.sortWith(_ < _)
+    if(means.size % 2 == 0) {
+      return ((means(means.size/2 -1) + means(means.size/2))/2).longValue
+    } else {
+      return means(means.size/2)
+    }
   }
 
 
@@ -116,7 +134,8 @@ object main{
 
 
   def exact_F2(x: RDD[String]) : Long = {
-
+    val ans = x.map(i => (i, 1L)).reduceByKey(_ + _).map(i => i._2 * i._2).reduce(_ + _)
+    return ans
   }
 
 
@@ -141,6 +160,8 @@ object main{
         println("Usage: project_2 input_path BJKST #buckets trials")
         sys.exit(1)
       }
+      println("INVALID")
+      /*
       val ans = BJKST(dfrdd, args(2).toInt, args(3).toInt)
 
       val endTimeMillis = System.currentTimeMillis()
@@ -149,6 +170,7 @@ object main{
       println("==================================")
       println("BJKST Algorithm. Bucket Size:"+ args(2) + ". Trials:" + args(3) +". Time elapsed:" + durationSeconds + "s. Estimate: "+ans)
       println("==================================")
+      */
     }
     else if(args(1)=="tidemark") {
       if(args.length != 3) {
